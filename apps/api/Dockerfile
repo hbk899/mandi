@@ -1,54 +1,66 @@
-# ── Stage 1: Install all dependencies ────────────────────────────
-FROM node:20-alpine AS deps
-WORKDIR /app
-
-RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
-
-# Copy workspace manifests for layer caching
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/config/package.json ./packages/config/
-COPY packages/validators/package.json ./packages/validators/
-COPY packages/ui/package.json ./packages/ui/
-
-RUN pnpm install --frozen-lockfile
-
-# ── Stage 2: Build ────────────────────────────────────────────────
+# ── Stage 1: Build ───────────────────────────────────────────────
+# Install deps and compile inside Docker so all pnpm shims
+# and Prisma client are generated with /app paths (not local paths).
 FROM node:20-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 
-# Restore installed deps
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules 2>/dev/null || true
+# ① Copy manifests first for better layer caching
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/api/package.json        ./apps/api/
+COPY packages/config/package.json ./packages/config/
+COPY packages/validators/package.json ./packages/validators/
+COPY packages/ui/package.json     ./packages/ui/
 
-# Copy full monorepo source (tsup needs workspace packages to inline them)
-COPY . .
+# ② Install ALL deps inside Docker (shims generated with /app/... paths)
+RUN pnpm install --frozen-lockfile
 
-# Generate Prisma client into node_modules
+# ③ Copy workspace package sources (needed by tsup to inline them)
+COPY packages/config/src     ./packages/config/src
+COPY packages/validators/src ./packages/validators/src
+
+# ④ Copy API source + config files
+COPY apps/api/src          ./apps/api/src
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+COPY apps/api/tsup.config.ts ./apps/api/tsup.config.ts
+COPY apps/api/prisma       ./apps/api/prisma
+
+# ⑤ Generate Prisma client (written into /app/... paths)
 RUN pnpm --filter @mandi/api db:generate
 
-# Bundle: inlines @mandi/config + @mandi/validators, leaves all else external
+# ⑥ Bundle: inlines @mandi/config + @mandi/validators, rest stays external
 RUN pnpm --filter @mandi/api build
 
-# ── Stage 3: Minimal production image ─────────────────────────────
+# ── Stage 2: Production image ─────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Bundled server (includes workspace packages inline)
-COPY --from=builder /app/apps/api/dist/server.js ./dist/server.js
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 
-# Prisma schema + migrations (needed by migrate deploy & generate)
-COPY --from=builder /app/apps/api/prisma ./prisma
+# ① Copy manifests (pnpm needs these to know the workspace structure)
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/api/package.json        ./apps/api/
+COPY packages/config/package.json ./packages/config/
+COPY packages/validators/package.json ./packages/validators/
+COPY packages/ui/package.json     ./packages/ui/
 
-# Runtime node_modules: all external runtime deps + Prisma engine
-# We copy the root monorepo node_modules which has everything flattened
-COPY --from=builder /app/node_modules ./node_modules
+# ② Install ALL deps inside Docker (not --prod; prisma CLI is a devDep)
+#    pnpm generates fresh shims with /app/... paths here too.
+RUN pnpm install --frozen-lockfile
+
+# ③ Copy Prisma schema + migrations, then regenerate client for this env
+COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+RUN pnpm --filter @mandi/api db:generate
+
+# ④ Copy the single-file bundled server (workspace deps are inlined)
+COPY --from=builder /app/apps/api/dist/server.js ./apps/api/dist/server.js
 
 EXPOSE 4000
 
-# Run DB migrations then start the server
-CMD ["sh", "-c", "node ./node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/server.js"]
+# Run DB migrations then start
+CMD ["sh", "-c", \
+  "pnpm --filter @mandi/api db:migrate:deploy && \
+   node apps/api/dist/server.js"]
