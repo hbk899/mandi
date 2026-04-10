@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "ہوم",
+    "post_ad": "اشتہار دیں",
+    "login": "لاگ ان",
+    "register": "رجسٹر",
+    "my_ads": "میرے اشتہارات",
+    "saved": "محفوظ شدہ",
+    "logout": "لاگ آؤٹ"
+  },
+  "search": {
+    "placeholder": "جانور، فصل، یا کچھ بھی تلاش کریں...",
+    "button": "تلاش کریں",
+    "filters": "فلٹر",
+    "sort": "ترتیب",
+    "results": "نتائج"
+  },
+  "listing": {
+    "price": "قیمت",
+    "negotiable": "قابل مذاکرہ",
+    "free": "مفت",
+    "contact": "رابطہ کریں",
+    "location": "جگہ",
+    "posted": "پوسٹ کیا",
+    "views": "مناظر",
+    "sold": "فروخت شدہ",
+    "whatsapp": "واٹس ایپ پر رابطہ کریں",
+    "save": "محفوظ کریں",
+    "share": "شیئر کریں",
+    "edit": "تدوین کریں",
+    "delete": "حذف کریں",
+    "mark_sold": "فروخت ہو گیا"
+  },
+  "categories": {
+    "all": "تمام اقسام",
+    "animals": "جانور",
+    "agriculture": "زراعت"
+  },
+  "common": {
+    "loading": "لوڈ ہو رہا ہے...",
+    "error": "خرابی",
+    "not_found": "نہیں ملا",
+    "back": "واپس",
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ",
+    "confirm": "تصدیق کریں",
+    "pkr": "PKR"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Home",
+    "post_ad": "Post Ad",
+    "login": "Login",
+    "register": "Register",
+    "my_ads": "My Ads",
+    "saved": "Saved",
+    "logout": "Logout"
+  },
+  "search": {
+    "placeholder": "Search animals, crops, or anything...",
+    "button": "Search",
+    "filters": "Filters",
+    "sort": "Sort",
+    "results": "results"
+  },
+  "listing": {
+    "price": "Price",
+    "negotiable": "Negotiable",
+    "free": "Free",
+    "contact": "Contact for price",
+    "location": "Location",
+    "posted": "Posted",
+    "views": "views",
+    "sold": "Sold",
+    "whatsapp": "Chat on WhatsApp",
+    "save": "Save",
+    "share": "Share",
+    "edit": "Edit",
+    "delete": "Delete",
+    "mark_sold": "Mark as Sold"
+  },
+  "categories": {
+    "all": "All Categories",
+    "animals": "Animals",
+    "agriculture": "Agriculture"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "not_found": "Not found",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "pkr": "PKR"
+  }
+}

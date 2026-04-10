@@ -1,0 +1,225 @@
+// Mandi — Classified Ads Platform
+// https://www.prisma.io/docs/concepts/components/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────────────
+// ENUMS
+// ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  user
+  moderator
+  admin
+}
+
+enum ListingStatus {
+  draft
+  active
+  sold
+  expired
+  flagged
+}
+
+enum PriceType {
+  fixed
+  negotiable
+  free
+  contact
+}
+
+enum Province {
+  Punjab
+  Sindh
+  KPK
+  Balochistan
+  AJK
+  GilgitBaltistan
+  ICT
+}
+
+enum ReportReason {
+  spam
+  fraud
+  prohibited
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  resolved
+}
+
+enum AttributeInputType {
+  text
+  number
+  select
+  boolean
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MODELS
+// ──────────────────────────────────────────────────────────────────
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  phone           String?  @unique
+  email           String?  @unique
+  passwordHash    String
+  profileImageUrl String?
+  role            UserRole @default(user)
+  isVerified      Boolean  @default(false)
+  cityId          String?
+
+  city            City?          @relation(fields: [cityId], references: [id])
+  listings        Listing[]
+  savedListings   SavedListing[]
+  reports         Report[]       @relation("reporter")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model City {
+  id          String   @id @default(cuid())
+  nameEn      String
+  nameUr      String
+  province    Province
+  isMajorCity Boolean  @default(false)
+
+  users    User[]
+  listings Listing[]
+
+  @@map("cities")
+}
+
+model Category {
+  id         String  @id @default(cuid())
+  slug       String  @unique
+  nameEn     String
+  nameUr     String
+  iconUrl    String?
+  sortOrder  Int     @default(0)
+  isActive   Boolean @default(true)
+  parentId   String?
+
+  parent     Category?           @relation("CategoryTree", fields: [parentId], references: [id])
+  children   Category[]          @relation("CategoryTree")
+  listings   Listing[]
+  attributes CategoryAttribute[]
+
+  @@map("categories")
+}
+
+model CategoryAttribute {
+  id           String             @id @default(cuid())
+  categoryId   String
+  attributeKey String             // e.g. "breed", "age_months"
+  labelEn      String
+  labelUr      String
+  inputType    AttributeInputType
+  optionsJson  Json?              // ["Sahiwal","Friesian"] for select type
+  isRequired   Boolean            @default(false)
+  sortOrder    Int                @default(0)
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("category_attributes")
+}
+
+model Listing {
+  id            String        @id @default(cuid())
+  userId        String
+  categoryId    String
+  cityId        String?
+
+  titleEn       String
+  titleUr       String?
+  descriptionEn String?
+  descriptionUr String?
+
+  price         Decimal?      @db.Decimal(12, 2)
+  currency      String        @default("PKR")
+  priceType     PriceType     @default(fixed)
+
+  status        ListingStatus @default(active)
+  locationText  String?
+  latitude      Float?
+  longitude     Float?
+
+  // Flexible per-category attributes: { breed: "Sahiwal", weight_kg: 120 }
+  attributes    Json          @default("{}")
+
+  viewCount     Int           @default(0)
+  expiresAt     DateTime?
+
+  user          User            @relation(fields: [userId], references: [id])
+  category      Category        @relation(fields: [categoryId], references: [id])
+  city          City?           @relation(fields: [cityId], references: [id])
+  images        ListingImage[]
+  savedBy       SavedListing[]
+  reports       Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([categoryId, status])
+  @@index([cityId, status])
+  @@index([userId])
+  @@map("listings")
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  listingId String
+  imageUrl  String
+  publicId  String  // Cloudinary public_id
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("listing_images")
+}
+
+model SavedListing {
+  id        String @id @default(cuid())
+  userId    String
+  listingId String
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@map("saved_listings")
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  listingId      String
+  reporterUserId String
+  reason         ReportReason
+  notes          String?
+  status         ReportStatus @default(pending)
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporter User    @relation("reporter", fields: [reporterUserId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("reports")
+}

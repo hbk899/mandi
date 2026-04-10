@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design token CSS variables ─────────────────────────────── */
+:root {
+  --color-primary-50: #f0fdf4;
+  --color-primary-500: #22c55e;
+  --color-primary-600: #16a34a;
+  --color-primary-700: #15803d;
+  --color-secondary-500: #f59e0b;
+  --color-secondary-600: #d97706;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+}
+
+/* ── Urdu / RTL typography ───────────────────────────────────── */
+[lang="ur"],
+[dir="rtl"] {
+  font-family: 'Noto Nastaliq Urdu', serif;
+  line-height: 2.2;
+  letter-spacing: 0;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-neutral-50 text-neutral-900 antialiased;
+}
+
+/* ── Utility: visually hide text but keep it for screen readers  */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
