@@ -27,8 +27,5 @@ Thumbs.db
 .idea/
 *.swp
 
-# Prisma
-apps/api/prisma/migrations/
-
 # Uploads (local dev)
 uploads/

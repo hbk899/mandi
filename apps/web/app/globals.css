@@ -16,8 +16,8 @@
 }
 
 /* ── Urdu / RTL typography ───────────────────────────────────── */
-[lang="ur"],
-[dir="rtl"] {
+[lang='ur'],
+[dir='rtl'] {
   font-family: 'Noto Nastaliq Urdu', serif;
   line-height: 2.2;
   letter-spacing: 0;
@@ -30,17 +30,4 @@ html {
 
 body {
   @apply bg-neutral-50 text-neutral-900 antialiased;
-}
-
-/* ── Utility: visually hide text but keep it for screen readers  */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }

@@ -1,13 +1,10 @@
+const createNextIntlPlugin = require('next-intl/plugin')
+
+const withNextIntl = createNextIntlPlugin('./i18n.ts')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
-  // Internationalization — Urdu is the primary locale
-  i18n: {
-    locales: ['ur', 'en'],
-    defaultLocale: 'ur',
-    localeDetection: true,
-  },
 
   images: {
     remotePatterns: [
@@ -23,4 +20,4 @@ const nextConfig = {
   transpilePackages: ['@mandi/ui', '@mandi/config', '@mandi/validators'],
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)

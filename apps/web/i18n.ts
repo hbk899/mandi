@@ -1,0 +1,14 @@
+import { getRequestConfig } from 'next-intl/server'
+import { notFound } from 'next/navigation'
+
+export const locales = ['ur', 'en'] as const
+export type Locale = (typeof locales)[number]
+export const defaultLocale: Locale = 'ur'
+
+export default getRequestConfig(async ({ locale }) => {
+  if (!locales.includes(locale as Locale)) notFound()
+
+  return {
+    messages: (await import(`./public/locales/${locale}/common.json`)).default,
+  }
+})

@@ -5,6 +5,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Run with: pnpm --filter @mandi/api db:seed
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

@@ -1,0 +1,33 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-api:
+    name: Deploy API to Railway
+    runs-on: ubuntu-latest
+    needs: []           # runs in parallel with deploy-web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up --service api --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  deploy-web:
+    name: Deploy Web to Vercel
+    runs-on: ubuntu-latest
+    # Vercel auto-deploys from GitHub integration — this step is
+    # a no-op placeholder. Remove or replace with Vercel CLI if
+    # you disable the GitHub integration.
+    steps:
+      - name: Web deploys automatically via Vercel GitHub integration
+        run: echo "Vercel watches main branch automatically. Nothing to do here."
