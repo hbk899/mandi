@@ -1,63 +1,54 @@
-# ── Stage 1: deps ────────────────────────────────────────────────
+# ── Stage 1: Install all dependencies ────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 
-# Copy workspace manifests only (for better layer caching)
+# Copy workspace manifests for layer caching
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/config/package.json ./packages/config/
 COPY packages/validators/package.json ./packages/validators/
 COPY packages/ui/package.json ./packages/ui/
 
-# Install all deps (needed for Prisma generate)
 RUN pnpm install --frozen-lockfile
 
-# ── Stage 2: build ────────────────────────────────────────────────
+# ── Stage 2: Build ────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 
-# Copy deps from stage 1
+# Restore installed deps
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules 2>/dev/null || true
 
-# Copy full source
+# Copy full monorepo source (tsup needs workspace packages to inline them)
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client into node_modules
 RUN pnpm --filter @mandi/api db:generate
 
-# Compile TypeScript
+# Bundle: inlines @mandi/config + @mandi/validators, leaves all else external
 RUN pnpm --filter @mandi/api build
 
-# ── Stage 3: production runner ────────────────────────────────────
+# ── Stage 3: Minimal production image ─────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+# Bundled server (includes workspace packages inline)
+COPY --from=builder /app/apps/api/dist/server.js ./dist/server.js
 
-# Only copy what's needed at runtime
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/apps/api/package.json ./apps/api/
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/pnpm-lock.yaml ./
+# Prisma schema + migrations (needed by migrate deploy & generate)
+COPY --from=builder /app/apps/api/prisma ./prisma
 
-# Install production deps only
-RUN pnpm install --frozen-lockfile --prod
-
-# Generate Prisma client in production image
-RUN pnpm --filter @mandi/api db:generate
+# Runtime node_modules: all external runtime deps + Prisma engine
+# We copy the root monorepo node_modules which has everything flattened
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 4000
 
-# Run migrations then start the server
-CMD ["sh", "-c", "node apps/api/dist/server.js"]
+# Run DB migrations then start the server
+CMD ["sh", "-c", "node ./node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/server.js"]

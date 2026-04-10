@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Express } from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import compression from 'compression'
@@ -14,7 +14,7 @@ import { uploadsRouter } from './modules/uploads/uploads.routes'
 import { errorHandler } from './middleware/error.middleware'
 import { notFound } from './middleware/notFound.middleware'
 
-const app = express()
+const app: Express = express()
 
 // Security & utility middleware
 app.use(helmet())

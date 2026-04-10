@@ -28,7 +28,7 @@ const ATTRIBUTES: Record<
     { key: 'age_months', labelEn: 'Age (months)', labelUr: 'عمر (مہینے)', type: 'number' },
     { key: 'milk_liters_per_day', labelEn: 'Milk (litres/day)', labelUr: 'دودھ (لیٹر/روز)', type: 'number' },
     { key: 'gender', labelEn: 'Gender', labelUr: 'جنس', type: 'select', options: ['Male', 'Female'] },
-    { key: 'pregnant', labelEn: 'Pregnant', labelUر: 'حاملہ', type: 'boolean' },
+    { key: 'pregnant', labelEn: 'Pregnant', labelUr: 'حاملہ', type: 'boolean' },
   ],
   camels: [
     { key: 'breed', labelEn: 'Breed', labelUr: 'نسل', type: 'select', options: ['Brela', 'Dhatti', 'Kharai', 'Other'] },

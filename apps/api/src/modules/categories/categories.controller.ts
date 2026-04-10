@@ -24,7 +24,7 @@ export async function getCategories(_req: Request, res: Response, next: NextFunc
 export async function getCategory(req: Request, res: Response, next: NextFunction) {
   try {
     const category = await prisma.category.findUnique({
-      where: { slug: req.params.slug },
+      where: { slug: String(req.params.slug) },
       include: {
         attributes: { orderBy: { sortOrder: 'asc' } },
         children: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { getProfile, updateProfile, getMyListings, saveToggle, getSaved } from './users.controller'
 import { requireAuth } from '../../middleware/auth.middleware'
 
-export const usersRouter = Router()
+export const usersRouter: Router = Router()
 
 usersRouter.get('/me', requireAuth, getProfile)
 usersRouter.patch('/me', requireAuth, updateProfile)

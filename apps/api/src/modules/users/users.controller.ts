@@ -62,7 +62,7 @@ export async function getSaved(req: Request, res: Response, next: NextFunction) 
 
 export async function saveToggle(req: Request, res: Response, next: NextFunction) {
   try {
-    const { listingId } = req.params
+    const listingId = String(req.params.listingId)
     const userId = req.user!.userId
 
     const existing = await prisma.savedListing.findUnique({

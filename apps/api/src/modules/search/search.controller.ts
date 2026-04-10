@@ -1,46 +1,59 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../../lib/prisma'
 
+/** Safely extract a scalar string from an Express query param */
+function qs(v: string | string[] | undefined): string | undefined {
+  if (v === undefined) return undefined
+  return Array.isArray(v) ? v[0] : v
+}
+
 export async function search(req: Request, res: Response, next: NextFunction) {
   try {
     const { q, category, city, minPrice, maxPrice, sort = 'newest', page = '1', limit = '20' } = req.query
 
     const where: Record<string, unknown> = { status: 'active' }
 
-    // Full-text search using PostgreSQL ts_vector
-    // Using raw query for full-text search across bilingual fields
-    if (q) {
+    const qStr = qs(q as string | string[] | undefined)
+    if (qStr) {
       where.OR = [
-        { titleEn: { contains: q as string, mode: 'insensitive' } },
-        { titleUr: { contains: q as string, mode: 'insensitive' } },
-        { descriptionEn: { contains: q as string, mode: 'insensitive' } },
-        { descriptionUr: { contains: q as string, mode: 'insensitive' } },
+        { titleEn: { contains: qStr, mode: 'insensitive' } },
+        { titleUr: { contains: qStr, mode: 'insensitive' } },
+        { descriptionEn: { contains: qStr, mode: 'insensitive' } },
+        { descriptionUr: { contains: qStr, mode: 'insensitive' } },
       ]
     }
 
-    if (category) where.category = { slug: category }
-    if (city) where.cityId = city as string
-    if (minPrice || maxPrice) {
+    const categoryStr = qs(category as string | string[] | undefined)
+    const cityStr = qs(city as string | string[] | undefined)
+    const minPriceStr = qs(minPrice as string | string[] | undefined)
+    const maxPriceStr = qs(maxPrice as string | string[] | undefined)
+
+    if (categoryStr) where.category = { slug: categoryStr }
+    if (cityStr) where.cityId = cityStr
+    if (minPriceStr || maxPriceStr) {
       where.price = {
-        ...(minPrice ? { gte: parseFloat(minPrice as string) } : {}),
-        ...(maxPrice ? { lte: parseFloat(maxPrice as string) } : {}),
+        ...(minPriceStr ? { gte: parseFloat(minPriceStr) } : {}),
+        ...(maxPriceStr ? { lte: parseFloat(maxPriceStr) } : {}),
       }
     }
 
+    const sortStr = qs(sort as string | string[] | undefined) ?? 'newest'
     const orderBy =
-      sort === 'price_asc'
+      sortStr === 'price_asc'
         ? { price: 'asc' as const }
-        : sort === 'price_desc'
+        : sortStr === 'price_desc'
           ? { price: 'desc' as const }
           : { createdAt: 'desc' as const }
 
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string)
+    const pageNum = parseInt(qs(page as string | string[] | undefined) ?? '1')
+    const limitNum = parseInt(qs(limit as string | string[] | undefined) ?? '20')
+    const skip = (pageNum - 1) * limitNum
     const [listings, total] = await Promise.all([
       prisma.listing.findMany({
         where,
         orderBy,
         skip,
-        take: parseInt(limit as string),
+        take: limitNum,
         select: {
           id: true,
           titleEn: true,
@@ -58,7 +71,7 @@ export async function search(req: Request, res: Response, next: NextFunction) {
       prisma.listing.count({ where }),
     ])
 
-    res.json({ listings, total, page: parseInt(page as string), limit: parseInt(limit as string) })
+    res.json({ listings, total, page: pageNum, limit: limitNum })
   } catch (err) {
     next(err)
   }

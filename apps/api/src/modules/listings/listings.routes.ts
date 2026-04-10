@@ -9,7 +9,7 @@ import {
 } from './listings.controller'
 import { requireAuth } from '../../middleware/auth.middleware'
 
-export const listingsRouter = Router()
+export const listingsRouter: Router = Router()
 
 listingsRouter.get('/', getListings)
 listingsRouter.get('/:id', getListing)
