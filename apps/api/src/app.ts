@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
@@ -59,10 +58,5 @@ app.use('/api/v1', v1)
 // Error handling (must be last)
 app.use(notFound)
 app.use(errorHandler)
-
-const PORT = parseInt(process.env.PORT ?? '4000', 10)
-app.listen(PORT, () => {
-  console.log(`[api] running on http://localhost:${PORT}`)
-})
 
 export default app

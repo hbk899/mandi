@@ -100,6 +100,10 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
     const accessToken = signAccessToken({ userId: user.id, role: user.role })
     res.json({ accessToken })
   } catch (err) {
+    // jwt.verify throws JsonWebTokenError / TokenExpiredError — map both to 401
+    if (err instanceof Error && (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')) {
+      return next(new AppError(401, 'Invalid or expired token'))
+    }
     next(err)
   }
 }
