@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { CITIES, CATEGORIES } from '@mandi/config'
 
@@ -135,7 +136,7 @@ async function main() {
           },
           update: {
             labelEn: attr.labelEn,
-            labelUr: attr.labelUr,
+            labelUr: attr.labelUr ?? attr.labelEn,
             inputType: attr.type,
             optionsJson: attr.options ?? null,
             isRequired: attr.required ?? false,
@@ -146,7 +147,7 @@ async function main() {
             categoryId: childRecord.id,
             attributeKey: attr.key,
             labelEn: attr.labelEn,
-            labelUr: attr.labelUr,
+            labelUr: attr.labelUr ?? attr.labelEn,
             inputType: attr.type,
             optionsJson: attr.options ?? null,
             isRequired: attr.required ?? false,
