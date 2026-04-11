@@ -8,7 +8,7 @@ import { CATEGORIES_FLAT, MAJOR_CITIES } from '@mandi/config'
 import { api } from '../../../../lib/api'
 import { useAuth } from '../../../../lib/auth'
 
-interface UploadedImage { id: string; imageUrl: string; isPrimary: boolean }
+interface UploadedImage { publicId: string; imageUrl: string; isPrimary: boolean }
 
 export default function NewListingPage() {
   const locale = useLocale()
@@ -39,19 +39,32 @@ export default function NewListingPage() {
 
   const uploadImage = async (file: File) => {
     setUploading(true)
-    const form = new FormData()
-    form.append('image', file)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1'}/uploads`, {
-        method: 'POST',
+      const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1'
+      // Step 1: get Cloudinary signed upload params
+      const sigRes = await fetch(`${BASE}/uploads/sign`, {
         headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!sigRes.ok) throw new Error('Could not get upload signature')
+      const { signature, timestamp, folder, cloudName, apiKey } =
+        await sigRes.json() as { signature: string; timestamp: number; folder: string; cloudName: string; apiKey: string }
+
+      // Step 2: upload directly to Cloudinary
+      const form = new FormData()
+      form.append('file', file)
+      form.append('signature', signature)
+      form.append('timestamp', String(timestamp))
+      form.append('folder', folder)
+      form.append('api_key', apiKey)
+      const upRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
         body: form,
       })
-      if (!res.ok) throw new Error('Upload failed')
-      const data = await res.json() as { id: string; imageUrl: string }
-      setImages(prev => [...prev, { ...data, isPrimary: prev.length === 0 }])
+      if (!upRes.ok) throw new Error('Cloudinary upload failed')
+      const upData = await upRes.json() as { public_id: string; secure_url: string }
+      setImages(prev => [...prev, { publicId: upData.public_id, imageUrl: upData.secure_url, isPrimary: prev.length === 0 }])
     } catch {
-      setError(isUr ? 'تصویر اپلوڈ نہیں ہوئی' : 'Image upload failed')
+      setError(isUr ? 'تصویر اپلوڈ نہیں ہوئی — Cloudinary ترتیب دیں' : 'Image upload failed — configure Cloudinary to enable photos')
     } finally {
       setUploading(false)
     }
@@ -68,16 +81,16 @@ export default function NewListingPage() {
     }
   }
 
-  const setPrimary = (id: string) => {
-    setImages(prev => prev.map(img => ({ ...img, isPrimary: img.id === id })))
+  const setPrimary = (publicId: string) => {
+    setImages(prev => prev.map(img => ({ ...img, isPrimary: img.publicId === publicId })))
   }
 
-  const removeImage = async (id: string) => {
+  const removeImage = async (publicId: string) => {
     try {
-      await api.delete(`/uploads/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      await api.delete(`/uploads/${encodeURIComponent(publicId)}`, { headers: { Authorization: `Bearer ${token}` } })
     } catch { /* ignore */ }
     setImages(prev => {
-      const remaining = prev.filter(img => img.id !== id)
+      const remaining = prev.filter(img => img.publicId !== publicId)
       if (remaining.length > 0 && !remaining.some(img => img.isPrimary)) {
         remaining[0].isPrimary = true
       }
@@ -108,13 +121,21 @@ export default function NewListingPage() {
         ...(locationText.trim() && { locationText: locationText.trim() }),
         priceType,
         currency: 'PKR',
-        ...(price && priceType === 'fixed' || priceType === 'negotiable' ? { price: Number(price) } : {}),
-        imageIds: images.map(img => img.id),
-        primaryImageId: images.find(img => img.isPrimary)?.id,
+        ...((priceType === 'fixed' || priceType === 'negotiable') && price ? { price: Number(price) } : {}),
       }
       const res = await api.post<{ id: string }>('/listings', body, {
         headers: { Authorization: `Bearer ${token}` },
       })
+      // Attach uploaded images if any
+      if (images.length > 0) {
+        await api.post(`/uploads/listings/${res.id}/images`, {
+          images: images.map(img => ({
+            publicId: img.publicId,
+            imageUrl: img.imageUrl,
+            isPrimary: img.isPrimary,
+          })),
+        }, { headers: { Authorization: `Bearer ${token}` } }).catch(() => {})
+      }
       router.push(`/listings/${res.id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : isUr ? 'خطا — دوبارہ کوشش کریں' : 'Failed to create listing')
@@ -281,7 +302,7 @@ export default function NewListingPage() {
 
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {images.map(img => (
-              <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent">
+              <div key={img.publicId} className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent">
                 <Image src={img.imageUrl} alt="" fill className="object-cover" sizes="120px" />
                 {img.isPrimary && (
                   <span className="absolute top-1 start-1 text-xs bg-primary-600 text-white px-1.5 py-0.5 rounded-full">
@@ -292,7 +313,7 @@ export default function NewListingPage() {
                   {!img.isPrimary && (
                     <button
                       type="button"
-                      onClick={() => setPrimary(img.id)}
+                      onClick={() => setPrimary(img.publicId)}
                       className="text-xs bg-white text-neutral-800 rounded px-1.5 py-0.5"
                     >
                       {isUr ? 'مرکزی' : 'Main'}
@@ -300,7 +321,7 @@ export default function NewListingPage() {
                   )}
                   <button
                     type="button"
-                    onClick={() => removeImage(img.id)}
+                    onClick={() => removeImage(img.publicId)}
                     className="text-xs bg-error-600 text-white rounded px-1.5 py-0.5"
                   >
                     ✕

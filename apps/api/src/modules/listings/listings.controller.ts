@@ -79,11 +79,16 @@ export async function getListing(req: Request, res: Response, next: NextFunction
 
 export async function createListing(req: Request, res: Response, next: NextFunction) {
   try {
-    const data = createListingSchema.parse(req.body)
+    const { categorySlug, ...rest } = createListingSchema.parse(req.body)
+
+    const category = await prisma.category.findUnique({ where: { slug: categorySlug } })
+    if (!category) return next(new AppError(400, `Unknown category: ${categorySlug}`))
+
     const listing = await prisma.listing.create({
       data: {
-        ...data,
-        attributes: data.attributes as Prisma.InputJsonValue,
+        ...rest,
+        categoryId: category.id,
+        attributes: rest.attributes as Prisma.InputJsonValue,
         userId: req.user!.userId,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       } satisfies Prisma.ListingUncheckedCreateInput,
