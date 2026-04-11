@@ -27,5 +27,5 @@ Thumbs.db
 .idea/
 *.swp
 
-# Uploads (local dev)
-uploads/
+# Uploads (local dev file storage — root only, not source modules)
+/uploads/

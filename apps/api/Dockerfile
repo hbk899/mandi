@@ -21,6 +21,8 @@ COPY packages/config/src     ./packages/config/src
 COPY packages/validators/src ./packages/validators/src
 
 # ④ Copy API source + config files
+#    Root tsconfig.json must be here because apps/api/tsconfig.json extends it
+COPY tsconfig.json         ./tsconfig.json
 COPY apps/api/src          ./apps/api/src
 COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY apps/api/tsup.config.ts ./apps/api/tsup.config.ts
