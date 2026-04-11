@@ -21,8 +21,8 @@ const config: Config = {
         error: colors.semantic.error,
       },
       fontFamily: {
-        sans: typography.fontFamily.sans,
-        urdu: typography.fontFamily.urdu,
+        sans: [...typography.fontFamily.sans],
+        urdu: [...typography.fontFamily.urdu],
       },
       fontSize: typography.fontSize,
       fontWeight: typography.fontWeight,
