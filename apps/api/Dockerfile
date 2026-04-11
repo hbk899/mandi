@@ -4,6 +4,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# OpenSSL is required by Prisma's schema engine at generate time
+RUN apk add --no-cache openssl
+
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 
 # ① Copy manifests first for better layer caching
@@ -28,7 +31,8 @@ COPY apps/api/tsconfig.json   ./apps/api/tsconfig.json
 COPY apps/api/tsup.config.ts  ./apps/api/tsup.config.ts
 COPY apps/api/prisma          ./apps/api/prisma
 
-# ⑤ Generate Prisma client (writes into /app/node_modules/.pnpm/...)
+# ⑤ Generate Prisma client — binaryTargets in schema.prisma includes
+#    linux-musl-openssl-3.0.x so the correct Alpine binary is downloaded
 RUN pnpm --filter @mandi/api db:generate
 
 # ⑥ Bundle API — @mandi/config + @mandi/validators inlined, rest external
@@ -42,6 +46,10 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# OpenSSL is required at runtime by the Prisma query engine and
+# schema engine (migrate deploy). Alpine ships without it by default.
+RUN apk add --no-cache openssl
 
 # Runtime node_modules: root .pnpm store (contains Prisma engine +
 # generated client from builder) and API-level node_modules (symlinks
