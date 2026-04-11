@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useLocale } from 'next-intl'
 import { CATEGORIES, MAJOR_CITIES } from '@mandi/config'
 import { api } from '../../../lib/api'
@@ -18,6 +18,14 @@ interface Listing {
 interface ListingsResponse { listings: Listing[]; total: number; page: number; limit: number }
 
 export default function ListingsPage() {
+  return (
+    <Suspense>
+      <ListingsContent />
+    </Suspense>
+  )
+}
+
+function ListingsContent() {
   const locale = useLocale()
   const sp = useSearchParams()
   const router = useRouter()
