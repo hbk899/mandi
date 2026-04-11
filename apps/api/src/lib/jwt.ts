@@ -13,14 +13,17 @@ export function signRefreshToken(userId: string) {
 }
 
 export async function storeRefreshToken(userId: string, token: string) {
+  if (!redis) return
   await redis.set(`refresh:${userId}`, token, 'EX', REFRESH_TTL)
 }
 
 export async function invalidateRefreshToken(userId: string) {
+  if (!redis) return
   await redis.del(`refresh:${userId}`)
 }
 
 export async function validateRefreshToken(userId: string, token: string): Promise<boolean> {
+  if (!redis) return true // no Redis — allow refresh, rely on JWT expiry
   const stored = await redis.get(`refresh:${userId}`)
   return stored === token
 }

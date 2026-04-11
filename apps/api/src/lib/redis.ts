@@ -1,10 +1,14 @@
 import Redis from 'ioredis'
 
-export const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
-  lazyConnect: true,
-  maxRetriesPerRequest: 3,
-})
+export const redisAvailable = !!process.env.REDIS_URL
 
-redis.on('error', (err) => {
+export const redis = redisAvailable
+  ? new Redis(process.env.REDIS_URL!, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 3,
+    })
+  : null
+
+redis?.on('error', (err) => {
   console.error('[redis] connection error:', err.message)
 })
