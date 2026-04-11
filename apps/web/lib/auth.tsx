@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await api.post<{ user: User; accessToken: string }>('/auth/login', { email, password })
+    const res = await api.post<{ user: User; accessToken: string }>('/auth/login', { identifier: email, password })
     localStorage.setItem('mandi_token', res.accessToken)
     setState({ user: res.user, token: res.accessToken, isLoading: false })
   }, [])
