@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages } from 'next-intl/server'
+import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { locales, type Locale } from '../../i18n'
 import { AuthProvider } from '../../lib/auth'
@@ -40,6 +40,7 @@ export default async function LocaleLayout({
 }) {
   if (!locales.includes(locale as Locale)) notFound()
 
+  setRequestLocale(locale)
   const messages = await getMessages()
   const isRtl = locale === 'ur'
 
