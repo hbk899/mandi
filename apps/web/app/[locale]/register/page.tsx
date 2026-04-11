@@ -1,0 +1,134 @@
+'use client'
+
+import { useState, FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useLocale } from 'next-intl'
+import { useAuth } from '../../../lib/auth'
+
+export default function RegisterPage() {
+  const locale = useLocale()
+  const isUr = locale === 'ur'
+  const router = useRouter()
+  const { register } = useAuth()
+
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (password.length < 8) {
+      setError(isUr ? 'پاس ورڈ کم از کم ۸ حروف کا ہونا چاہیے' : 'Password must be at least 8 characters')
+      return
+    }
+    setLoading(true)
+    try {
+      await register({ name, email, phone, password })
+      router.push('/')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : isUr ? 'رجسٹریشن میں خطا' : 'Registration failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold font-urdu text-primary-700">منڈی</h1>
+          <p className="text-neutral-500 text-sm mt-1">{isUr ? 'نیا اکاؤنٹ بنائیں' : 'Create your account'}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                {isUr ? 'پورا نام' : 'Full Name'}
+              </label>
+              <input
+                type="text"
+                required
+                autoComplete="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full border border-neutral-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                placeholder={isUr ? 'محمد احمد' : 'Muhammad Ahmad'}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                {isUr ? 'ای میل' : 'Email'}
+              </label>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full border border-neutral-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                {isUr ? 'فون نمبر' : 'Phone Number'}
+              </label>
+              <input
+                type="tel"
+                required
+                autoComplete="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full border border-neutral-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                placeholder="03001234567"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                {isUr ? 'پاس ورڈ' : 'Password'}
+              </label>
+              <input
+                type="password"
+                required
+                autoComplete="new-password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full border border-neutral-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                placeholder="••••••••"
+              />
+              <p className="text-xs text-neutral-400 mt-1">{isUr ? 'کم از کم ۸ حروف' : 'Minimum 8 characters'}</p>
+            </div>
+
+            {error && (
+              <p className="text-sm text-error-600 bg-error-50 rounded-lg px-3 py-2">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors disabled:opacity-60"
+            >
+              {loading ? '...' : isUr ? 'رجسٹر کریں' : 'Create Account'}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-neutral-500 mt-4">
+            {isUr ? 'پہلے سے اکاؤنٹ ہے؟' : 'Already have an account?'}{' '}
+            <Link href="/login" className="text-primary-600 font-medium hover:underline">
+              {isUr ? 'داخل ہوں' : 'Sign In'}
+            </Link>
+          </p>
+        </div>
+      </div>
+    </main>
+  )
+}
