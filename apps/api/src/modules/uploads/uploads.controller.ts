@@ -36,18 +36,25 @@ export async function attachImages(req: Request, res: Response, next: NextFuncti
     if (!listing) return next(new AppError(404, 'Listing not found'))
     if (listing.userId !== req.user!.userId) return next(new AppError(403, 'Forbidden'))
 
-    const existing = await prisma.listingImage.count({ where: { listingId } })
-    if (existing + images.length > MAX_IMAGES_PER_LISTING) {
+    const existingImages = await prisma.listingImage.findMany({ where: { listingId }, select: { publicId: true } })
+    const existingPublicIds = new Set(existingImages.map((img) => img.publicId))
+    const newImages = images.filter((img) => !existingPublicIds.has(img.publicId))
+
+    if (existingImages.length + newImages.length > MAX_IMAGES_PER_LISTING) {
       return next(new AppError(400, `Max ${MAX_IMAGES_PER_LISTING} images per listing`))
     }
 
+    if (newImages.length === 0) {
+      return res.status(201).json({ count: 0 })
+    }
+
     const created = await prisma.listingImage.createMany({
-      data: images.map((img, i) => ({
+      data: newImages.map((img, i) => ({
         listingId,
         imageUrl: img.imageUrl,
         publicId: img.publicId,
-        sortOrder: existing + i,
-        isPrimary: img.isPrimary ?? (existing === 0 && i === 0),
+        sortOrder: existingImages.length + i,
+        isPrimary: img.isPrimary ?? (existingImages.length === 0 && i === 0),
       })),
     })
     res.status(201).json(created)
