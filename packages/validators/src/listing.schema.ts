@@ -9,7 +9,7 @@ export const createListingSchema = z.object({
   currency: z.string().default('PKR'),
   priceType: z.enum(['fixed', 'negotiable', 'free', 'contact']).default('fixed'),
   categorySlug: z.string().min(1),
-  cityId: z.string().cuid().optional(),
+  cityId: z.string().optional(),
   locationText: z.string().max(300).optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
