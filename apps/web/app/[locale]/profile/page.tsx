@@ -31,8 +31,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!token) return
-    api.get<{ listings: Listing[] }>('/users/me/listings', { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setListings(res.listings))
+    api.get<Listing[]>('/users/me/listings', { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setListings(res))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [token])
@@ -88,7 +88,17 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {listings.map(l => <ListingCard key={l.id} listing={l} />)}
+          {listings.map(l => (
+            <div key={l.id} className="flex flex-col gap-2">
+              <ListingCard listing={l} />
+              <Link
+                href={`/listings/${l.id}/edit`}
+                className="text-center text-xs text-neutral-500 hover:text-primary-600 border border-neutral-200 hover:border-primary-300 rounded-lg py-1.5 transition-colors"
+              >
+                {isUr ? 'ترمیم کریں' : 'Edit'}
+              </Link>
+            </div>
+          ))}
         </div>
       )}
     </main>

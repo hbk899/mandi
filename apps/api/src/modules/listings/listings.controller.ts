@@ -36,7 +36,17 @@ export async function getListings(req: Request, res: Response, next: NextFunctio
     const { category, city, minPrice, maxPrice, page = '1', limit = '20' } = req.query
 
     const where: Record<string, unknown> = { status: 'active' }
-    if (category) where.category = { slug: qs(category as string | string[]) }
+    if (category) {
+      const categorySlug = qs(category as string | string[])
+      const cat = await prisma.category.findUnique({
+        where: { slug: categorySlug },
+        include: { children: { select: { id: true } } },
+      })
+      if (cat) {
+        const ids = [cat.id, ...cat.children.map((c) => c.id)]
+        where.categoryId = { in: ids }
+      }
+    }
     if (city) where.cityId = qs(city as string | string[])
     if (minPrice || maxPrice) {
       where.price = {
@@ -107,10 +117,20 @@ export async function updateListing(req: Request, res: Response, next: NextFunct
     if (!listing) return next(new AppError(404, 'Listing not found'))
     if (listing.userId !== req.user!.userId) return next(new AppError(403, 'Forbidden'))
 
-    const data = updateListingSchema.parse(req.body)
+    const { categorySlug, ...rest } = updateListingSchema.parse(req.body)
+    let categoryId: string | undefined
+    if (categorySlug) {
+      const cat = await prisma.category.findUnique({ where: { slug: categorySlug } })
+      if (!cat) return next(new AppError(400, `Unknown category: ${categorySlug}`))
+      categoryId = cat.id
+    }
     const updated = await prisma.listing.update({
       where: { id },
-      data: data as unknown as Prisma.ListingUncheckedUpdateInput,
+      data: {
+        ...rest,
+        ...(categoryId ? { categoryId } : {}),
+        ...(rest.attributes ? { attributes: rest.attributes as Prisma.InputJsonValue } : {}),
+      } as Prisma.ListingUncheckedUpdateInput,
       select: LISTING_SELECT,
     })
     res.json(updated)
