@@ -11,7 +11,7 @@ export async function getSignedUploadUrl(req: Request, res: Response, next: Next
     const folder = `mandi/listings/${req.user!.userId}`
 
     const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder, eager: 'w_800,h_600,c_fill/q_auto/f_auto' },
+      { timestamp, folder },
       process.env.CLOUDINARY_API_SECRET!
     )
 
