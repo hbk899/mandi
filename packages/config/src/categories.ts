@@ -7,6 +7,7 @@ export type CategorySlug =
   | 'buffaloes'
   | 'camels'
   | 'horses'
+  | 'chickens'
   | 'birds'
   | 'fish'
   | 'other-animals'
@@ -42,9 +43,10 @@ export const CATEGORIES: CategoryConfig[] = [
       { slug: 'buffaloes', nameEn: 'Buffaloes', nameUr: 'بھینسیں', sortOrder: 3 },
       { slug: 'camels', nameEn: 'Camels', nameUr: 'اونٹ', sortOrder: 4 },
       { slug: 'horses', nameEn: 'Horses', nameUr: 'گھوڑے', sortOrder: 5 },
-      { slug: 'birds', nameEn: 'Birds', nameUr: 'پرندے', sortOrder: 6 },
-      { slug: 'fish', nameEn: 'Fish', nameUr: 'مچھلی', sortOrder: 7 },
-      { slug: 'other-animals', nameEn: 'Other Animals', nameUr: 'دیگر جانور', sortOrder: 8 },
+      { slug: 'chickens', nameEn: 'Chickens', nameUr: 'مرغیاں', sortOrder: 6 },
+      { slug: 'birds', nameEn: 'Birds', nameUr: 'پرندے', sortOrder: 7 },
+      { slug: 'fish', nameEn: 'Fish', nameUr: 'مچھلی', sortOrder: 8 },
+      { slug: 'other-animals', nameEn: 'Other Animals', nameUr: 'دیگر جانور', sortOrder: 9 },
     ],
   },
   {

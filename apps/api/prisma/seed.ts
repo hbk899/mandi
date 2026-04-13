@@ -44,6 +44,14 @@ const ATTRIBUTES: Record<
     { key: 'trained', labelEn: 'Trained', labelUr: 'تربیت یافتہ', type: 'boolean' },
     { key: 'color', labelEn: 'Color', labelUr: 'رنگ', type: 'text' },
   ],
+  chickens: [
+    { key: 'breed', labelEn: 'Breed', labelUr: 'نسل', type: 'select', options: ['Desi', 'Broiler', 'Layer', 'Rhode Island Red', 'Aseel', 'Other'] },
+    { key: 'quantity', labelEn: 'Quantity', labelUr: 'تعداد', type: 'number', required: true },
+    { key: 'age_months', labelEn: 'Age (months)', labelUr: 'عمر (مہینے)', type: 'number' },
+    { key: 'purpose', labelEn: 'Purpose', labelUr: 'مقصد', type: 'select', options: ['Meat', 'Eggs', 'Both', 'Breeding'] },
+    { key: 'gender', labelEn: 'Gender', labelUr: 'جنس', type: 'select', options: ['Male (مرغ)', 'Female (مرغی)', 'Mixed'] },
+    { key: 'vaccinated', labelEn: 'Vaccinated', labelUr: 'ویکسین شدہ', type: 'boolean' },
+  ],
   birds: [
     { key: 'species', labelEn: 'Species', labelUr: 'قسم', type: 'select', options: ['Parrot', 'Pigeon', 'Hen', 'Rooster', 'Peacock', 'Other'] },
     { key: 'age_months', labelEn: 'Age (months)', labelUr: 'عمر (مہینے)', type: 'number' },
